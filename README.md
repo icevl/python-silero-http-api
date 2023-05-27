@@ -5,5 +5,7 @@ This is a simple script that launches a web server, listens for POST requests on
 ## Usage
 
 ```bash
+pip install -r requirements.txt
+python3 server.py
 curl -X POST http://127.0.0.1:10000 -H 'Content-Type: application/json' -d '{"text":"Message"}'
 ```
