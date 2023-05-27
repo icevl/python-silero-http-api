@@ -40,24 +40,31 @@ class RequestHandler(BaseHTTPRequestHandler):
             sample_rate = 24000
             speaker = 'baya'
 
-            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-                temp_filepath = temp_file.name
-                audio = model.apply_tts(
-                    text=text, speaker=speaker, sample_rate=sample_rate)
-                if audio.dim() != 2:
-                    audio = audio.unsqueeze(0)
+            try:
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+                    temp_filepath = temp_file.name
+                    audio = model.apply_tts(
+                        text=text, speaker=speaker, sample_rate=sample_rate)
+                    if audio.dim() != 2:
+                        audio = audio.unsqueeze(0)
 
-                torchaudio.save(temp_filepath, audio, sample_rate,
-                                encoding="PCM_S", bits_per_sample=16)
+                    torchaudio.save(temp_filepath, audio, sample_rate,
+                                    encoding="PCM_S", bits_per_sample=16)
 
-                self.send_response(200)
-                self.send_header('Content-type', 'audio/wav')
+                    self.send_response(200)
+                    self.send_header('Content-type', 'audio/wav')
+                    self.end_headers()
+
+                    with open(temp_filepath, 'rb') as audio_file:
+                        self.wfile.write(audio_file.read())
+
+                os.remove(temp_filepath)
+            except:
+                self.send_response(400)
+                self.send_header('Content-type', 'text/plain')
                 self.end_headers()
-
-                with open(temp_filepath, 'rb') as audio_file:
-                    self.wfile.write(audio_file.read())
-
-            os.remove(temp_filepath)
+                self.wfile.write(b'Invalid model response')
+                return
 
         else:
             self.send_response(400)
